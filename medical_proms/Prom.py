@@ -1,6 +1,7 @@
 import logging
 import random
 import string
+from sys import exception
 from flask import Flask, render_template, jsonify, request
 import mysql.connector
 from flask import Flask
@@ -11,8 +12,6 @@ app = Flask(__name__)
 
 # Set up the logger configuration
 logging.basicConfig(level=logging.INFO)  # Choose the desired logging level
-
-
 CORS(app)
 
 # Create a logger specific to your Flask app
@@ -37,34 +36,38 @@ def connect_to_mysql():
 # Create an API route to fetch data
 @app.route('/api/data', methods=['GET'])
 def handle_data():
-    if request.method == 'GET':
-        # Connect to the database and fetch data (same as before)
-        conn = connect_to_mysql()
-        cursor = conn.cursor()
-        query = "SELECT * FROM random_questionare"
-        cursor.execute(query)
-        data = cursor.fetchall()
-        cursor.close()
-        conn.close()
+    try:
+        if request.method == 'GET':
+            # Connect to the database and fetch data (same as before)
+            conn = connect_to_mysql()
+            cursor = conn.cursor()
+            query = "SELECT * FROM random_questionare"
+            cursor.execute(query)
+            data = cursor.fetchall()
+            cursor.close()
+            conn.close()
 
-        # Convert data to JSON response
-        data_list = []
-        for row in data:
-            data_list.append({
-                'sr_num': row[0],
-                'questions': row[1],
-                'option_a': row[2],
-                'option_b': row[3],
-                'option_c': row[4],
-                'option_d': row[5],
-                'option_e': row[6],
-                'Answer': row[7]
-            })
-        return jsonify(data=data_list)
+            # Convert data to JSON response
+            data_list = []
+            for row in data:
+                data_list.append({
+                    'sr_num': row[0],
+                    'questions': row[1],
+                    'option_a': row[2],
+                    'option_b': row[3],
+                    'option_c': row[4],
+                    'option_d': row[5],
+                    'option_e': row[6],
+                    'Answer': row[7]
+                })
+            return jsonify({"Status":200, "message":data_list})
+    except exception as e:
+        return jsonify({"Status": 400, "message": str(e)})
     
 
 @app.route('/api/save', methods=['POST'])
 def save_data():
+    try:
         conn = connect_to_mysql()
         cursor = conn.cursor()
         data = request.get_json()  # Assuming the request data is in JSON format
@@ -76,7 +79,9 @@ def save_data():
             i = i+1
             conn.commit()
         cursor.close()
-        return ('data saved successfully')
+        return jsonify({"Status": 200, "message": "data saved successfully"})
+    except exception as e:
+        return jsonify({"Status": 400, "message": str(e)})
 
 
 
